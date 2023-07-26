@@ -8,9 +8,8 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
 
 ## Plan
 1. [Threads](#threads)
-   - creation
-   - basic methods
-   - thread priority
+   - [creation](#creation)
+   - [basic methods](#methods)
    - data sharing
    - Daemon Thread
 2. Runnable and Callable
@@ -31,4 +30,44 @@ _Threads_ are the lightweight and smallest unit of processing that can be manage
 
 **_Multithreaded_** architecture is suitable when tasks share a lot of data and perfomance is more important because a thread requires less time for creation, termination, and context switching than a process and uses fewer resources than a process. **_Multi-Process_** architecture is suitable when security and stability have the highest priority and tasks are unrelated.
 
+### Creation
 
+The first way to create a thread is **implement _Runnable_** interface and pass to a new Thread object.
+
+```java
+Thread thread = new Thread(() -> System.out.println("New thread is running"));
+// as Running is functional interface, we can use lambda
+```
+The second way to create a thread is **extend _Thread_** class and create an object of that class. It can be useful if we have a common part for custom threads.
+
+```java
+    public static void main(String[] args) {
+        Thread thread = new CustomThread();
+    }
+
+    private static class CustomThread extends Thread {
+        @Override
+        public void run() {
+            System.out.println("Custom thread is running");
+        }
+    }
+```
+### Methods
+
+`start()` - is used to create a thread and start the execution of the task that is kept in the run() method. Can be called only once.
+
+`run()` -  is used to start the execution of the created thread. Can be called multiple times. 
+
+`sleep()` - is used to pause the execution of the current thread for some specified period.
+
+`setName()` - is used to set name for the current thread.
+
+`setPriopriy()` - is used to set priority for the current thread. Can take values from 1 to 10. Thread with the highest priority will get an execution chance prior to other threads.
+
+`setUncaughtExceptionHandler()` - is used to set the handler invoked when the current thread terminates due to an uncaught exception. Is useful if you need to close some resources.
+```java
+thread.setUncaughtExceptionHandler((t, e) -> System.out.println("Unexpected error happened in thread "));
+
+// if unchecked exception is thrown when thread will run, the output will be:
+// Unexpected error happened in thread
+```
