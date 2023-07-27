@@ -11,7 +11,7 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [creation](#creation)
    - [basic methods](#methods)
    - data sharing
-   - Daemon Thread
+   - [daemon thread](#daemon)
 2. Runnable and Callable
 3. Executor
 4. Synchronization
@@ -136,3 +136,32 @@ System.out.println("All threads are completed");
 `setDaemon()` - is used to mark the current thread as daemon thread if `true` is passed or remove daemon flag if `false` is passed.
 
 `isDaemon()` - is used to check whether the current thread is daemon or not.
+
+### Daemon
+
+_Daemon threads_ are background threads that do not prevent the application from exiting after main thread termination. JVM waits for all user threads to finish their tasks before termination but excluding daemon ones. These threads are referred to as low priority threads. Daemon threads are good to use when:
+1. Need to do background tasks that shouldn't block application from termination;
+2. Code in a worker thread is not under out control and we do not want it to block application from termination.
+Daemon threads are usually used to carry out some supportive or service tasks for other threads, so you should not do any I/O operation in them because resources will not be closed correctrly. Method `setDaemon(true)` is used to make user thread a daemon one.
+```java
+public static void main(String[] args) {
+	Runnable displayTask = () -> {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			System.out.println("Thread " + Thread.currentThread().getName() + " was interrupted");
+		}
+		System.out.println("Thread " + Thread.currentThread().getName() + " was started");
+	};
+
+	Thread userThread = new Thread(displayTask, "UserThread");
+	Thread daemonThread = new Thread(displayTask, "DaemonThread");
+
+	userThread.start();
+	daemonThread.setDaemon(true);
+	daemonThread.start();
+
+	// only 'Thread UserThread was started' will be printed
+	// because main thread terminates before daemon thread executes
+}
+```
