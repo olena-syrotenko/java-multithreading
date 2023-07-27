@@ -71,3 +71,68 @@ thread.setUncaughtExceptionHandler((t, e) -> System.out.println("Unexpected erro
 // if unchecked exception is thrown when thread will run, the output will be:
 // Unexpected error happened in thread
 ```
+
+`isInterrupted()` - is used to check the interrupt status and not clear the interrupt flag.
+
+`interrupted()`- _static_, is used to check the interrupt status of the current thread, after that the interrupt flag will be cleared.
+
+`interrupt()` - is used to set the interrupted status/flag of the target thread. If the method with interrupting handler (e.g. `wait()`, `sleep()`, `join()`) is used, then `InterruptedException` will be thrown. Or `ClosedByInterruptException` if the target thread is blocked in an I/O operation upon an interruptible channel.
+
+```java
+public static void main(String[] args) {
+	Thread sleepThread = new Thread(new SleepTask());
+	sleepThread.start();
+	sleepThread.interrupt();
+
+	Thread infiniteThread = new Thread(new InfiniteTask());
+	infiniteThread.start();
+	infiniteThread.interrupt();
+}
+
+public static class SleepTask implements Runnable {
+	@Override
+	public void run() {
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			System.out.println("SleepTask was interrupted. InterruptedException was caught");
+		}
+	}
+}
+
+public static class InfiniteTask implements Runnable {
+	@Override
+	public void run() {
+		while (true) {
+			if (Thread.currentThread().isInterrupted()) {
+				System.out.println("InfiniteTask was interrupted. Interruption flag was checked");
+				return;
+			}
+		}
+	}
+}
+
+// Output
+// SleepTask was interrupted. InterruptedException was caught
+// InfiniteTask was interrupted. Interruption flag was checked
+```
+
+`join()` - is used to pause the execution of other threads unless and until the specified thread on which join is called is dead or completed. It can be useful if we need to stop a thread from running until another thread gets ended. Also time of pause can be passed as a prarameter.
+
+```java
+thread1.start();
+thread1.join(2000);
+// The 2nd thread will start after 2 seconds of the 1st thread's work
+thread2.start();
+thread1.join();
+// The 3rd thread will start after the 1st thread finishes
+thread3.start();
+thread2.join();
+thread3.join();
+// message will be displayed after the 2nd and 3rd threads finish
+System.out.println("All threads are completed");
+```
+
+`setDaemon()` - is used to mark the current thread as daemon thread if `true` is passed or remove daemon flag if `false` is passed.
+
+`isDaemon()` - is used to check whether the current thread is daemon or not.
