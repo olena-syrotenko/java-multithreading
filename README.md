@@ -10,8 +10,9 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
 1. [Threads](#threads)
    - [creation](#creation)
    - [basic methods](#methods)
-   - data sharing
    - [daemon thread](#daemon)
+   - data sharing
+   - [optimization](#optimization)   
 2. Runnable and Callable
 3. Executor
 4. Synchronization
@@ -165,3 +166,9 @@ public static void main(String[] args) {
 	// because main thread terminates before daemon thread executes
 }
 ```
+### Optimization
+
+**_Latency_** - the time of compilation of a single task. To improve perfomance according to latency criteria, we need to reduce time by breaking tasks into multiple ones. To achive the most effective optimization we need to check next steps:
+1. The optimal number of threads is the number of cores if all threads are runnable independently and without interruption and nothing else is running on CPU. If there is some background tasks, the optimal number of thread is difference between total core number and cores for background tasks. (_e.g._ if we have 8 cores and some background tasks, the optimal number of threads is equal to 6)
+2. It is necessary to compare the cost of execution of a task in single-threaded and multi-threaded cases for as many values as possible from the interval of execution of the task. (_e.g._ if the task is simple and takes little time, the time spent creating threads can increase the total execution time in a multi-threaded solution)
+3. It is necessary to assess the ability to divide the task into subtasks.
