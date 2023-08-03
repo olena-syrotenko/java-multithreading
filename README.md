@@ -13,16 +13,15 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [daemon thread](#daemon)
    - data sharing
    - [optimization](#optimization)   
-2. Runnable and Callable
-3. Executor
-4. Synchronization
-5. Locking
-6. Inter-thread communication
+2. [Executor](#executor)
+3. Synchronization
+4. Locking
+5. Inter-thread communication
    - Semaphore
    - CyclicBarrier
    - CountDownLatch
-7. Virtual Threads
-8. Thread Scheduler
+6. Virtual Threads
+7. Thread Scheduler
 
 ## Threads
 _Threads_ are the lightweight and smallest unit of processing that can be managed independently by a scheduler. They share the common address space and are independent of each other.
@@ -172,3 +171,71 @@ public static void main(String[] args) {
 1. The optimal number of threads is the number of cores if all threads are runnable independently and without interruption and nothing else is running on CPU. If there is some background tasks, the optimal number of thread is difference between total core number and cores for background tasks. (_e.g._ if we have 8 cores and some background tasks, the optimal number of threads is equal to 6)
 2. It is necessary to compare the cost of execution of a task in single-threaded and multi-threaded cases for as many values as possible from the interval of execution of the task. (_e.g._ if the task is simple and takes little time, the time spent creating threads can increase the total execution time in a multi-threaded solution)
 3. It is necessary to assess the ability to divide the task into subtasks.
+
+**_Throughput_** - the amount of tasks completed in a gain period. To improve perfomance according to throughput criteria and perfom as many tasks as possible as fast as possible, we need to running independent tasks in parallel. It allows to skip pre- and postprocess steps and not to waste time for context switching. To achive the most effective optimization we can use a _thread pool_:
+1. Best strategy - handling each request on a different thread.
+2. If we need to execute CPU intensive tasks, the number of threads should be equal the number of cores.
+3. If we need to execute IO intensive tasks (e.g DB or API calling), the number of threads should be more than the number of cores.
+
+
+## Executor
+**`Executor`** is a simple interface from `java.util.concurrent` framework that have a single method `execute(Runnable)` that should be implemented in custom executors.
+```java
+class ThreadPerTaskExecutor implements Executor {
+	public void execute(Runnable r) {
+		new Thread(r).start();
+	}
+}
+```
+
+**`ExecutorService`** is an interface that extends `Executor` with multiple methods for handling and checking the lifecycle of a concurrent task execution service.
+
+`submit()` - is used to submit `Callable` or a `Runnable` task for execution and returns a resonse as `Future` instance.
+
+`invokeAll()` - is used to execute all tasks from provided collection and return the list of `Future` results.
+
+`invokeAny()` - is used to execute all tasks from provided collection and return the one of successfull results.
+
+`shutdown()` - is used to shut down the executor service by stopping the acceptance of new tasks and shut down after all running threads finish their current work.
+
+`shutdownNow()` - is used to shut down the executor service immediately without waiting for the completion of previously submitted tasks.
+
+`awaitTermination()` - is used to  wait for all the tasks submitted to the service to complete execution according to provided time. Returns `true` if the executor service was terminated or returns `false` if the wait time elapsed before termination.
+
+It is good practice to combine last 3 methods to shut down the executor service:
+```java
+// shut down the service
+executorService.shutdown();
+try {
+    // wait for all tasks to be completed 
+    if (!executorService.awaitTermination(800, TimeUnit.MILLISECONDS)) {
+        // if not all tasks was completed, stop execution immediately
+        executorService.shutdownNow();
+    } 
+} catch (InterruptedException e) {
+    // if execution was interrupted, stop execution immediately
+    executorService.shutdownNow();
+}
+```
+
+`ExecutorService` can work both with `Runnable` and `Callable` tasks. **`Runnable`** interface cannot be passed to `invokeAll` method and has single method `run()` that does not return any result and cannot throw a checked exception. **`Callable`** interface can be passed to `invokeAll` method and has single method `call()` that returns a result and can throw a checked exception. 
+
+Executor Service contains of 3 main parts: thread pool, work queue and completion queue.  **_Thread pool_** is a collection of initialized threads that can be reused to execute incoming tasks. `ExecutorService` has next basic implementations of thread pool:
+
+1. **_ThreadPoolExecutor_** - for executing tasks using a pool of threads. Once a thread is finished executing the task, it goes back into the pool. Has such parameters as **_corePoolSize_** (the number of core threads that will be instantiated and kept in the pool), **_maximumPoolSize_** (the number of thread the pool is allowed to grow up to) and **_keepAliveTime_** (interval of time for which the threads are allowed to exist in the idle state).
+
+- **newSingleThreadExecutor()** - creates form of `ThreadPoolExecutor` containing a single thread. The single thread executor is ideal for creating an event loop.
+
+- **newFixedThreadPool()** - creates a `ThreadPoolExecutor` with equal corePoolSize and maximumPoolSize parameter values and a zero keepAliveTime, so the number of threads in this thread pool is always the same. If all threads are working, new tasks are put into a queue to wait for their turn.
+
+- **newCachedThreadPool()** - creates a `ThreadPoolExecutor` with 0 as a corePoolSize, `Integer.MAX_VALUE` as a maximumPoolSize and 60 seconds as a keepAliveTime. The cached thread pool may grow without bounds to accommodate any number of submitted tasks.  A typical use case is when we have a lot of short-living tasks in our application. The _queue_ size will always _be zero_ because internally a `SynchronousQueue` instance is used, in which pairs of insert and remove operations always occur simultaneously. 
+
+2. **__ScheduledThreadPoolExecutor**__ - extends ThreadPoolExecutor and allows to schedule task execution instead of running it immediately when a thread is available. Created by **`newScheduledThreadPool()`** method with provided corePoolSize, unbounded maximumPoolSize and zero keepAliveTime. It provides next additional methods:
+
+`schedule()` - is used to run a task once after a specified delay.
+
+`scheduleAtFixedRate()` - is used to run a task after a specified initial delay and then run it repeatedly with a certain period, where _period_ is the time between the starting times of the tasks.
+
+`scheduleWithFixedDelay()` - is used to run a task after a specified initial delay and then run it repeatedly with a certain period, where _period_ is the time between the end of the previous task and the start of the next. 
+
+3. **_ForkJoinPool_** -  for dealing with recursive algorithms tasks. With using a simple ThreadPoolExecutor for a recursive algorithm, all your threads are busy waiting for the lower levels of recursion to finish. The ForkJoinPool implements the so-called work-stealing algorithm that allows it to use available threads more efficiently and do not create a new thread for each task or subtask
