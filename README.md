@@ -226,16 +226,77 @@ Executor Service contains of 3 main parts: thread pool, work queue and completio
 
 - **newSingleThreadExecutor()** - creates form of `ThreadPoolExecutor` containing a single thread. The single thread executor is ideal for creating an event loop.
 
+```java
+public static void main(String[] args) {
+	AtomicInteger result = new AtomicInteger();
+	ExecutorService singleThreadService = Executors.newSingleThreadExecutor();
+
+	singleThreadService.submit(() -> {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			System.out.println("Thread was interrupted");
+		}
+		result.set(10);
+	});
+	singleThreadService.submit(() -> System.out.println(result.get()));
+	// The output is always be 10 because operations are executed sequentially
+	singleThreadService.shutdown();
+}
+```
+
 - **newFixedThreadPool()** - creates a `ThreadPoolExecutor` with equal corePoolSize and maximumPoolSize parameter values and a zero keepAliveTime, so the number of threads in this thread pool is always the same. If all threads are working, new tasks are put into a queue to wait for their turn.
 
-- **newCachedThreadPool()** - creates a `ThreadPoolExecutor` with 0 as a corePoolSize, `Integer.MAX_VALUE` as a maximumPoolSize and 60 seconds as a keepAliveTime. The cached thread pool may grow without bounds to accommodate any number of submitted tasks.  A typical use case is when we have a lot of short-living tasks in our application. The _queue_ size will always _be zero_ because internally a `SynchronousQueue` instance is used, in which pairs of insert and remove operations always occur simultaneously. 
+```java
+public static void main(String[] args) {
+	ThreadPoolExecutor fixedThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+	fixedThreadPool.submit(new DisplayWithDelay("The first task"));
+	fixedThreadPool.submit(new DisplayWithDelay("The second task"));
+	fixedThreadPool.submit(new DisplayWithDelay("The third task"));
 
-2. **__ScheduledThreadPoolExecutor**__ - extends ThreadPoolExecutor and allows to schedule task execution instead of running it immediately when a thread is available. Created by **`newScheduledThreadPool()`** method with provided corePoolSize, unbounded maximumPoolSize and zero keepAliveTime. It provides next additional methods:
+	// There is 1 task in queue, because all threads in pool are executing other two tasks
+	System.out.println("Executing tasks: " + fixedThreadPool.getPoolSize());
+	System.out.println("Tasks in queue: " + fixedThreadPool.getQueue().size());
+
+	fixedThreadPool.shutdown();
+}
+```
+
+- **newCachedThreadPool()** - creates a `ThreadPoolExecutor` with 0 as a corePoolSize, `Integer.MAX_VALUE` as a maximumPoolSize and 60 seconds as a keepAliveTime. The cached thread pool may grow without bounds to accommodate any number of submitted tasks.  A typical use case is when we have a lot of short-living tasks in our application. The _queue_ size will always _be zero_ because internally a `SynchronousQueue` instance is used, in which pairs of insert and remove operations always occur simultaneously.
+
+```java
+public static void main(String[] args) throws InterruptedException {
+	ThreadPoolExecutor cachedThreadPool = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+	cachedThreadPool.submit(new DisplayWithDelay("The first task"));
+	cachedThreadPool.submit(new DisplayWithDelay("The second task"));
+	cachedThreadPool.submit(new DisplayWithDelay("The third task"));
+
+	// There is no task in queue, because new thread is created for new task
+	System.out.println("Executing tasks: " + cachedThreadPool.getPoolSize());
+	System.out.println("Tasks in queue: " + cachedThreadPool.getQueue().size());
+
+	cachedThreadPool.shutdown();
+}
+```
+
+
+2. **_ScheduledThreadPoolExecutor**_ - extends ThreadPoolExecutor and allows to schedule task execution instead of running it immediately when a thread is available. Created by **`newScheduledThreadPool()`** method with provided corePoolSize, unbounded maximumPoolSize and zero keepAliveTime. It provides next additional methods:
 
 `schedule()` - is used to run a task once after a specified delay.
 
 `scheduleAtFixedRate()` - is used to run a task after a specified initial delay and then run it repeatedly with a certain period, where _period_ is the time between the starting times of the tasks.
 
 `scheduleWithFixedDelay()` - is used to run a task after a specified initial delay and then run it repeatedly with a certain period, where _period_ is the time between the end of the previous task and the start of the next. 
+
+```java
+public static void main(String[] args) {
+	ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(3);
+
+	// Scheduled message will be displayed after main thread message
+	scheduledThreadPool.schedule(() -> System.out.println("Scheduled message"), 1, TimeUnit.SECONDS);
+	System.out.println("Message from main thread");
+	scheduledThreadPool.shutdown();
+}
+```
 
 3. **_ForkJoinPool_** -  for dealing with recursive algorithms tasks. With using a simple ThreadPoolExecutor for a recursive algorithm, all your threads are busy waiting for the lower levels of recursion to finish. The ForkJoinPool implements the so-called work-stealing algorithm that allows it to use available threads more efficiently and do not create a new thread for each task or subtask
