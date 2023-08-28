@@ -302,6 +302,14 @@ public static void main(String[] args) {
 
 ## Synchronization
 
+Atomic operations include:
+
+- all reference assignments (get and set);
+- assignments to a primitive type (**except** `long` and `double`)
+- assignments to `long` and `double` with **`volatile`** keyword. _volatile_ field has special properties according to the Java Memory Model (JMM, specifies how multiple threads access common memory in a concurrent Java application). The reads and writes of a volatile variable are _synchronization_ actions;
+
+- _java.util.concurrent.atomic_ classes.
+
 Synchronization is a locking mechanism, designed to prevent access to a method or block of code and shared resource by multiple threads. It can be achieved with **`synchronized`** keyword.
 
 - _synchronized method_ - the thread acquires a lock on the object when it enters the synchronized method and releases the lock when it leaves method. No other thread can use this method or other methods with `synchronized` keyword in this object until the current thread finishes its execution and release the lock.
