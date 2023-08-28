@@ -14,14 +14,13 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - data sharing
    - [optimization](#optimization)   
 2. [Executor](#executor)
-3. Synchronization
+3. [Synchronization](#synchronization)
 4. Locking
 5. Inter-thread communication
    - Semaphore
    - CyclicBarrier
    - CountDownLatch
 6. Virtual Threads
-7. Thread Scheduler
 
 ## Threads
 _Threads_ are the lightweight and smallest unit of processing that can be managed independently by a scheduler. They share the common address space and are independent of each other.
@@ -300,3 +299,46 @@ public static void main(String[] args) {
 ```
 
 3. **_ForkJoinPool_** -  for dealing with recursive algorithms tasks. With using a simple ThreadPoolExecutor for a recursive algorithm, all your threads are busy waiting for the lower levels of recursion to finish. The ForkJoinPool implements the so-called work-stealing algorithm that allows it to use available threads more efficiently and do not create a new thread for each task or subtask
+
+## Synchronization
+
+Synchronization is a locking mechanism, designed to prevent access to a method or block of code and shared resource by multiple threads. It can be achieved with **`synchronized`** keyword.
+
+- _synchronized method_ - the thread acquires a lock on the object when it enters the synchronized method and releases the lock when it leaves method. No other thread can use this method or other methods with `synchronized` keyword in this object until the current thread finishes its execution and release the lock.
+
+```java
+// if two threads call this method, then one of them will wait until the first one is finished
+public synchronized void increase(Integer times, Integer value) {
+	for (int i = 0; i < times; ++i) {
+		counter += value;
+	}
+}
+```
+
+- _synchronized block_ - the thread acquires a lock on the object on the block with `synchronized` keyword and releases the lock when it leaves the block. Synchronized blocks should be preferred more as it boosts the performance of a particular program. It only locks a certain part of the program (critical section) rather than the entire method.
+
+```java
+// if two threads call this method,
+// then both of them call dao concurrently and then one of them will block when the counter changes
+public void increaseWithSaveHistory(Integer times, Integer value) throws InterruptedException {
+	someDao.saveHistory(times, value);
+
+	synchronized (this) {
+		for (int i = 0; i < times; ++i) {
+			counter += value;
+		}
+	}
+}
+```
+
+- _static synchronization_ - the thread acquires a lock on the Class object associated with the class. Since only one Class object exists per JVM per class, only one thread can execute inside a static synchronized method per class, irrespective of the number of instances it has.
+
+```java
+// If threads work with different instances of class and call this method,
+// then they will anyway be blocked during its execution
+public static synchronized void doSomething() throws InterruptedException {
+	System.out.println("Start of static synchronized method with thread " + Thread.currentThread().getName());
+	Thread.sleep(1000);
+	System.out.println("End of static synchronized method with thread " + Thread.currentThread().getName());
+}
+```
