@@ -15,12 +15,13 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [optimization](#optimization)   
 2. [Executor](#executor)
 3. [Synchronization](#synchronization)
-4. Locking
-5. Inter-thread communication
+4. [Locking](#locking)
+   - [deadlock](#deadlock)
+6. Inter-thread communication
    - Semaphore
    - CyclicBarrier
    - CountDownLatch
-6. Virtual Threads
+7. Virtual Threads
 
 ## Threads
 _Threads_ are the lightweight and smallest unit of processing that can be managed independently by a scheduler. They share the common address space and are independent of each other.
@@ -348,5 +349,84 @@ public static synchronized void doSomething() throws InterruptedException {
 	System.out.println("Start of static synchronized method with thread " + Thread.currentThread().getName());
 	Thread.sleep(1000);
 	System.out.println("End of static synchronized method with thread " + Thread.currentThread().getName());
+}
+```
+
+## Locking
+
+### Deadlock
+
+***Deadlock*** - situation where multiple threads are blocked forever because they hold locks on different resources and are waiting for other resources to complete their task.
+
+***Conditions***:
+
+1. *Mutual exclusion* - when only one thread can have exclusive access to a resource at a given moment;
+2. *Hold and wait* - when at least one thread is holding a resource and is waiting for another resource;
+3. *Non-preemptive allocation* - when resource is released only after thread is done using it;
+4. *Circular wait* - a chain of at least two threads each one is holding one resource and waiting for another resource.
+
+```java
+// in this example if two threads call moveToStorage and moveToShop methods at a given moment, then deadlock will occur because
+// thread-1 will lock productInStorage object, thread-2 will lock productInShop object 
+// so thread-1 will wait for productInShop unlock and thread-2 will wait for productInShop unlock
+public static class ProductInventory {
+	private final List<Object> productInStorage = new ArrayList<>();
+	private final List<Object> productInShop = new ArrayList<>();
+
+	public ProductInventory(List<Object> productInStorage, List<Object> productInShop) {
+		this.productInStorage.addAll(productInStorage);
+		this.productInShop.addAll(productInShop);
+	}
+
+	public void moveToStorage(int count) {
+		synchronized (productInStorage) {
+			synchronized (productInShop) {
+				productInStorage.addAll(productInShop.stream().limit(count).collect(Collectors.toList()));
+				productInShop.clear();
+			}
+		}
+	}
+
+	public void moveToShop(int count) {
+		synchronized (productInShop) {
+			synchronized (productInStorage) {
+				productInShop.addAll(productInStorage.stream().limit(count).collect(Collectors.toList()));
+				productInStorage.clear();
+			}
+		}
+	}
+}
+```
+
+***Solution***: avoid circular wait - enforce a strict order in lock acquisition.
+
+```java
+// if we use the same order of locking then deadlock will not occur
+public static class ProductInventory {
+	private final List<Object> productInStorage = new ArrayList<>();
+	private final List<Object> productInShop = new ArrayList<>();
+
+	public ProductInventory(List<Object> productInStorage, List<Object> productInShop) {
+		this.productInStorage.addAll(productInStorage);
+		this.productInShop.addAll(productInShop);
+	}
+
+	public void moveToStorage(int count) {
+		synchronized (productInStorage) {
+			synchronized (productInShop) {
+				productInStorage.addAll(productInShop.stream().limit(count).collect(Collectors.toList()));
+				productInShop.clear();
+			}
+		}
+	}
+
+	public void moveToShop(int count) {
+		synchronized (productInStorage) {
+			synchronized (productInShop) {
+				productInShop.addAll(productInStorage.stream().limit(count).collect(Collectors.toList()));
+				productInStorage.clear();
+			}
+		}
+	}
 }
 ```
