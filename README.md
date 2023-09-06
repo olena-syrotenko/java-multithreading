@@ -17,6 +17,7 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
 3. [Synchronization](#synchronization)
 4. [Locking](#locking)
    - [deadlock](#deadlock)
+   - [ReentrantLock](#lock)
 6. Inter-thread communication
    - Semaphore
    - CyclicBarrier
@@ -428,5 +429,64 @@ public static class ProductInventory {
 			}
 		}
 	}
+}
+```
+
+### Lock
+
+***ReentrantLock*** - an object that provides same functionality as `synchronized` keyword. Requires explicit locking with `lock()` and unlocking with `unlock()`. 
+
+*Advantages*: provide more control over locking (wuth `lockInterruptibly()` and `tryLock()`) and guarantee fairness (with pass `true` into constructor `new ReentrantLock(true)`).
+
+Good practice to avoid deadlocks - *surround* critical section with *try-catch* block and put `unlock()` method call in *finally* block.
+
+```java
+private final ReentrantLock lockObject = new ReentrantLock();
+
+public void someMethod() {
+	lockObject.lock();
+	try {
+		// do something
+	} finally {
+		lockObject.unlock();
+	}
+}
+```
+
+**`lockInterruptibly()`** - allow iterrupt suspended thread from waiting on the lock. 
+
+```java
+private final ReentrantLock lockObject = new ReentrantLock();
+
+// if we iterrupt thread that waiting for lockObject in this method then threas will be successfully interrupted and be free to execute another task 
+public void someMethod() {
+	try {
+    		lockObject.lockInterruptibly();
+   		try {
+			// do something
+		} finally {
+			lockObject.unlock();
+		}
+	} catch (InterruptedException e) {
+		System.out.println("Thread with lock waiting was interrupted");
+	}
+}
+```
+
+**`tryLock()`** - allow lock object with checking lock status: returns `true` if lock is available and `false` is not available (in this case thread will not be blocked and go to another instruction).
+
+```java
+private final ReentrantLock lockObject = new ReentrantLock();
+
+// if lockObject will be locked, then we just skeep critical section and go to another instructions
+public void someMethod() {
+	if (lockObject.tryLock()) {
+		try {
+			// do something
+		} finally {
+			lockObject.unlock();
+		}
+	}
+	// do something else
 }
 ```
