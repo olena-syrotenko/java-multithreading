@@ -2,7 +2,6 @@ package asd.syrotenko.locking;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +51,6 @@ public class ReentrantLockExample {
 
 	private static class UpdateExchangeRate implements Runnable {
 		private final ExchangeRate exchangeRate;
-		private final Random random = new Random();
 
 		public UpdateExchangeRate(ExchangeRate exchangeRate) {
 			this.exchangeRate = exchangeRate;
@@ -64,7 +62,7 @@ public class ReentrantLockExample {
 				exchangeRate.getReentrantLock().lock();
 				try {
 					Thread.sleep(2000);
-					exchangeRate.getCurrencies().entrySet().forEach(entry -> entry.setValue((double) random.nextInt(50)));
+					exchangeRate.getCurrencies().entrySet().forEach(entry -> entry.setValue(entry.getValue() + 1));
 				} catch (InterruptedException e) {
 					throw new RuntimeException(e);
 				} finally {
