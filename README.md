@@ -494,7 +494,7 @@ public void someMethod() {
 
 ### Semaphore
 
-***Semaphore*** is used to restrict the number of access to a particular resources. When *Lock* allows only *one* access to a resoirce, semaphore can restrict any number of resource.
+***Semaphore*** is used to restrict the number of access to a particular resources. When *Lock* allows only *one* access to a resource, semaphore can restrict any number of resource.
 It is suitable to be used in Producer-Consumer pattern.
 
 ```java
@@ -502,8 +502,8 @@ It is suitable to be used in Producer-Consumer pattern.
 Semaphore full = new Semaphore(0);
 // semaphore to lock producer
 Semaphore empty = new Semaphore(1);
-// result
-Object result = null
+// item to consume
+Object item = null
 
 // Producer
 private void produce() {
