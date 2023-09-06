@@ -11,15 +11,14 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [creation](#creation)
    - [basic methods](#methods)
    - [daemon thread](#daemon)
-   - data sharing
    - [optimization](#optimization)   
 2. [Executor](#executor)
 3. [Synchronization](#synchronization)
 4. [Locking](#locking)
    - [deadlock](#deadlock)
    - [ReentrantLock](#lock)
-6. Inter-thread communication
-   - Semaphore
+6. [Inter-thread communication](#inter-thread-communication)
+   - [Semaphore](#semaphore)
    - CyclicBarrier
    - CountDownLatch
 7. Virtual Threads
@@ -53,7 +52,7 @@ The second way to create a thread is **extend _Thread_** class and create an obj
         }
     }
 ```
-### Methods
+<h3 id="methods"> Basic Methods </h3>
 
 `start()` - is used to create a thread and start the execution of the task that is kept in the run() method. Can be called only once.
 
@@ -488,5 +487,74 @@ public void someMethod() {
 		}
 	}
 	// do something else
+}
+```
+
+<h2 id="inter-thread-communication"> Inter-thread communication </h2>
+
+### Semaphore
+
+***Semaphore*** is used to restrict the number of access to a particular resources. When *Lock* allows only *one* access to a resource, semaphore can restrict any number of resource.
+It is suitable to be used in Producer-Consumer pattern.
+
+```java
+// semaphore to lock consumer
+Semaphore full = new Semaphore(0);
+// semaphore to lock producer
+Semaphore empty = new Semaphore(1);
+// item to consume
+Object item = null
+
+// Producer
+private void produce() {
+	while(true) {
+		empty.acquire();
+		item = produceSomething();
+		full.release();
+	}
+}
+
+// Consumer
+private void consume() {
+	while(true) {
+		full.acquire();
+		consumeItem(item);
+		empty.release();
+	}
+}
+```
+
+Another way to use if we have limited number of users for some resource.
+
+```java
+public static void main(String[] args) throws InterruptedException {
+	ParkingService parkingService = new ParkingService();
+	ExecutorService executorService = Executors.newCachedThreadPool();
+
+	// only first two cars will be parked, then next three cars stay in queue and wait for previous cars leaving parking slot
+	List<Callable<Boolean>> carsToPark = IntStream.range(1, 6).mapToObj(number -> (Callable<Boolean>) () -> {
+			System.out.println("Car " + number + " in parking queue");
+			parkingService.parkCar(String.valueOf(number));
+			return true;
+		}).collect(Collectors.toList());
+	executorService.invokeAll(carsToPark);
+	executorService.shutdown();
+}
+
+public static class ParkingService {
+	private static final int PARKING_SLOTS = 2;
+	private final Semaphore semaphore = new Semaphore(PARKING_SLOTS);
+	private final Random random = new Random();
+
+	public void parkCar(String carNumber) throws InterruptedException {
+		// park car
+		semaphore.acquire();
+		System.out.println("Car " + carNumber + " was parked");
+		// stay car
+		Thread.sleep(random.nextInt(100) + 10);
+		// leave parking
+		System.out.println("Car " + carNumber + " left parking");
+		semaphore.release();
+	}
 }
 ```
