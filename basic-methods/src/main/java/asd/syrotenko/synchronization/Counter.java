@@ -1,30 +1,37 @@
 package asd.syrotenko.synchronization;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Counter {
 	private int counter = 0;
+	private AtomicInteger atomicCounter = new AtomicInteger(0);
 
 	public int getCounter() {
 		return counter;
+	}
+
+	public int getAtomicCounter() {
+		return atomicCounter.get();
 	}
 
 	public void resetCounter() {
 		counter = 0;
 	}
 
-	public Integer increase(Integer times) throws InterruptedException {
-		Thread.sleep(100);
+	public void resetAtomicCounter() {
+		atomicCounter.set(0);
+	}
+
+	public void increase(Integer times) {
 		for (int i = 0; i < times; ++i) {
 			counter += 1;
 		}
-		return counter;
 	}
 
-	public Integer decrease(Integer times) throws InterruptedException {
-		Thread.sleep(100);
+	public void decrease(Integer times) {
 		for (int i = 0; i < times; ++i) {
 			counter -= 1;
 		}
-		return counter;
 	}
 
 	public synchronized void increaseSynchronized(Integer times) {
@@ -36,6 +43,18 @@ public class Counter {
 	public synchronized void decreaseSynchronized(Integer times) {
 		for (int i = 0; i < times; ++i) {
 			counter -= 1;
+		}
+	}
+
+	public void increaseAtomically(Integer times) {
+		for (int i = 0; i < times; ++i) {
+			atomicCounter.incrementAndGet();
+		}
+	}
+
+	public void decreaseAtomically(Integer times) {
+		for (int i = 0; i < times; ++i) {
+			atomicCounter.decrementAndGet();
 		}
 	}
 
