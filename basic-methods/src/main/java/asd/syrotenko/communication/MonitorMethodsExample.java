@@ -41,7 +41,7 @@ public class MonitorMethodsExample {
 			notifyAll();
 		}
 
-		private synchronized void stock() {
+		public synchronized void stock() {
 			while (productsCount >= MAX_TO_SELL) {
 				try {
 					// wait until you need to refill items
