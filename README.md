@@ -19,6 +19,8 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [ReentrantLock](#lock)
 6. [Inter-thread communication](#inter-thread-communication)
    - [Semaphore](#semaphore)
+   - [Wait(), notify(), notifyAll()](#monitor-methods)
+   - [Condition](#condition)
    - CyclicBarrier
    - CountDownLatch
 7. Virtual Threads
@@ -555,6 +557,65 @@ public static class ParkingService {
 		// leave parking
 		System.out.println("Car " + carNumber + " left parking");
 		semaphore.release();
+	}
+}
+```
+
+<h3 id="monitor-methods"> Wait(), notify(), notifyAll() </h3>
+
+These methods of Object class are used to notify some threads of the actions of others. They are called only in **synchronized** context.
+
+`wait()` - causes the current thread to wait until another thread wakes it up. Current thread goes to *wait* state and not consuming CPU.
+
+`notify()` - wakes up a *single* waiting thread.
+
+`notifyAll()` - wakes up *all* waiting threads.
+
+```java
+public synchronized void sell(Integer countToSell) {
+	while (productsCount < countToSell) {
+		// if required number of items is less than number of items in store
+		// wait for storekeeper to bring in new items
+		wait();
+	}
+
+	productsCount -= countToSell;
+	System.out.println(countToSell + " items were sold, " + productsCount + " items in store");
+	// signal to storekeeper threads to increase amount of items
+	notifyAll();
+}
+```
+
+### Condition
+
+***Condition*** is associated with a *lock* and allows threads to wait for some condition to become true, due to some activity happening on other threads. 
+
+`await()` - unlock *lock* and wait until signaled, similar to wait() method.
+
+`signal()` - wakes up a single thread that waiting on condition. Waked up thread reacquires the lock. If there are 0 threads waiting, this method does nothing. Similar to notify().
+
+`signalAll()` - wakes up *all* waiting threads, similar to notifyAll() method.
+
+```java
+Lock lockObject = new ReentrantLock();
+// create condition on lock object
+Condition condition = lockObject.newCondition();
+
+public void sell(Integer countToSell) {
+	lockObject.lock();
+	try {
+		while (productsCount < countToSell) {
+			// if required number of items is less than number of items in store
+			// wait for storekeeper to bring in new items
+			condition.await();
+		}
+
+		productsCount -= countToSell;
+		System.out.println(countToSell + " items were sold, " + productsCount + " items in store");
+		// signal to storekeeper threads to increase amount of items
+		condition.signalAll();
+	} finally {
+		lockObject.unlock();
 	}
 }
 ```
