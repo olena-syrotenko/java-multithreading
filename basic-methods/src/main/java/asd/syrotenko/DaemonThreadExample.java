@@ -1,5 +1,7 @@
 package asd.syrotenko;
 
+import asd.syrotenko.tasks.SimpleThread;
+
 public class DaemonThreadExample {
 
 	public static void main(String[] args) {
@@ -10,25 +12,7 @@ public class DaemonThreadExample {
 		daemonThread.setDaemon(true);
 		daemonThread.start();
 
-		// only 'Thread UserThread was started' will be printed
+		// only 'end of UserThread' will be printed
 		// because main thread terminates before daemon thread executes
-	}
-
-	public static class SimpleThread extends Thread {
-
-		public SimpleThread(String name) {
-			super();
-			this.setName(name);
-		}
-
-		@Override
-		public void run() {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			System.out.println("Thread " + this.getName() + " was started");
-		}
 	}
 }

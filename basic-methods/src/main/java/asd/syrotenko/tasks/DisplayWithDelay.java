@@ -1,4 +1,4 @@
-package asd.syrotenko.executor;
+package asd.syrotenko.tasks;
 
 public class DisplayWithDelay implements Runnable {
 	private final String message;

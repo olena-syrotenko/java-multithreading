@@ -1,5 +1,7 @@
 package asd.syrotenko.executor;
 
+import asd.syrotenko.tasks.DisplayWithDelay;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 

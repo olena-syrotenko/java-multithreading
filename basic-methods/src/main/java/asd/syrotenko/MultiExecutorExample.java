@@ -1,5 +1,8 @@
 package asd.syrotenko;
 
+import asd.syrotenko.tasks.DisplayMessage;
+import asd.syrotenko.tasks.SayHello;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,34 +39,6 @@ public class MultiExecutorExample {
 		public void executeAndRemove() {
 			tasks.forEach(task -> new Thread(task).start());
 			tasks.clear();
-		}
-	}
-
-	public static class DisplayMessage implements Runnable {
-
-		private final String message;
-
-		public DisplayMessage(String message) {
-			this.message = message;
-		}
-
-		@Override
-		public void run() {
-			System.out.println(message);
-		}
-	}
-
-	public static class SayHello implements Runnable {
-
-		private final String user;
-
-		public SayHello(String message) {
-			this.user = message;
-		}
-
-		@Override
-		public void run() {
-			System.out.println("Good morning, " + user + "!");
 		}
 	}
 
