@@ -23,7 +23,7 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [Condition](#condition)
    - CyclicBarrier
    - CountDownLatch
-7. Virtual Threads
+7. [Virtual Threads](#virtual-threads)
 
 ## Threads
 _Threads_ are the lightweight and smallest unit of processing that can be managed independently by a scheduler. They share the common address space and are independent of each other.
@@ -619,3 +619,18 @@ public void sell(Integer countToSell) {
 	}
 }
 ```
+
+
+<h2 id="virtual-threads"> Virtual Threads </h2>
+
+***Virtual thread*** is and instance of Java Thread object but it is fully managed by JVM and garbage collector and isn't tied to a specific OS thread. A virtual thread still runs code on an OS thread. However, when code running in a virtual thread calls a blocking I/O operation, the Java runtime suspends the virtual thread until it can be resumed. The OS thread associated with the suspended virtual thread is now free to perform operations for other virtual threads.
+
+Can be created using static `Thread.ofVirtual()` method to get thread builder or static `Executors.newVirtualThreadPerTaskExecutor()` to get an executor.
+
+*Best practices*:
+
+1. Virtual threads are good to use for *blocking tasks* (DB, I/O) and aren't intended for long-running CPU-intensive operations. They provide improve in *throughput* but not it latency.
+2. Inefficient with short and frequent blocking calls in general (because of time for mounting/unmounting) but more efficient than platform threads (because context switching is more expensive).
+3. Never create fixed-size pools of virtual threads. Use `Executors.newVirtualThreadPerTaskExecutor()` and *Semaphores* for limited resources instead of fixed thread pools.
+4. Virtual threads are always *daemon* threads. `setDaemon()` method throws an exception.
+5. Virtual threads always have *default* priority. `setPriority()` methods does nothing.
