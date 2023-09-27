@@ -5,7 +5,6 @@ import asd.syrotenko.tasks.CalculateFactorial;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MultiCalculationExample {
 
@@ -18,7 +17,7 @@ public class MultiCalculationExample {
 
 	public static class Calculator {
 		public static BigInteger factorialSum(Integer... numbers) {
-			List<CalculateFactorial> calculationThreads = Arrays.stream(numbers).map(CalculateFactorial::new).collect(Collectors.toList());
+			List<CalculateFactorial> calculationThreads = Arrays.stream(numbers).map(CalculateFactorial::new).toList();
 			calculationThreads.forEach(Thread::start);
 			try {
 				for (CalculateFactorial calculationThread : calculationThreads) {
