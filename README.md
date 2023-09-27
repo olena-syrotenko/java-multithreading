@@ -22,7 +22,7 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [Condition](#condition)
    - [Semaphore](#semaphore)
    - [CountDownLatch](#count-down-latch)
-   - CyclicBarrier
+   - [CyclicBarrier](#cyclic-barrier)
 7. [Virtual Threads](#virtual-threads)
 
 ## Threads
@@ -668,6 +668,43 @@ private class InitializeService implements Runnable {
 	}
 }
 ```
+
+<h3 id="cyclic-barrier"> CyclicBarrier </h3>
+
+***CyclicBarrier*** is synchronization tool that allows a set of threads to all wait for each other to reach a common barrier point. A CyclicBarrier is initialized with a given _count_ and _Runnable task_ that will be executed after enough threads reach a barrier. Method `await()` is used to register that a certain thread has reached the barrier point. It **can be re-used** after the waiting threads are released.
+
+CyclicBarriers are used in programs in which we have a fixed number of threads that must wait for each other to reach a common point before continuing execution.
+
+```java
+public static void main(String[] args) {
+
+// after each group of 4 players the game starts
+CyclicBarrier cyclicBarrier = new CyclicBarrier(4, () -> System.out.println("Game started"));
+	try (ExecutorService executorService = Executors.newCachedThreadPool()) {
+		for (int i = 0; i < 20; ++i) {
+			executorService.submit(new AddPlayer(cyclicBarrier, "user" + i));
+		}
+	}
+}
+
+private static class AddPlayer implements Runnable {
+	private final CyclicBarrier cyclicBarrier;
+	private final String username;
+
+	public AddPlayer(CyclicBarrier cyclicBarrier, String username) {
+		this.cyclicBarrier = cyclicBarrier;
+		this.username = username;
+	}
+
+	@Override
+	public void run() {
+		Thread.sleep(new Random().nextInt(100));
+		System.out.println("Player " + username + " joined the lobby");
+		cyclicBarrier.await();
+	}
+}
+```
+
 
 <h2 id="virtual-threads"> Virtual Threads </h2>
 
