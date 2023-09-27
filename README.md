@@ -15,14 +15,14 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
 2. [Executor](#executor)
 3. [Synchronization](#synchronization)
 4. [Locking](#locking)
-   - [deadlock](#deadlock)
+   - [Deadlock](#deadlock)
    - [ReentrantLock](#lock)
 6. [Inter-thread communication](#inter-thread-communication)
-   - [Semaphore](#semaphore)
    - [Wait(), notify(), notifyAll()](#monitor-methods)
    - [Condition](#condition)
+   - [Semaphore](#semaphore)
+   - [CountDownLatch](#count-down-latch)
    - CyclicBarrier
-   - CountDownLatch
 7. [Virtual Threads](#virtual-threads)
 
 ## Threads
@@ -494,6 +494,65 @@ public void someMethod() {
 
 <h2 id="inter-thread-communication"> Inter-thread communication </h2>
 
+<h3 id="monitor-methods"> Wait(), notify(), notifyAll() </h3>
+
+These methods of Object class are used to notify some threads of the actions of others. They are called only in **synchronized** context.
+
+`wait()` - causes the current thread to wait until another thread wakes it up. Current thread goes to *wait* state and not consuming CPU.
+
+`notify()` - wakes up a *single* waiting thread.
+
+`notifyAll()` - wakes up *all* waiting threads.
+
+```java
+public synchronized void sell(Integer countToSell) {
+	while (productsCount < countToSell) {
+		// if required number of items is less than number of items in store
+		// wait for storekeeper to bring in new items
+		wait();
+	}
+
+	productsCount -= countToSell;
+	System.out.println(countToSell + " items were sold, " + productsCount + " items in store");
+	// signal to storekeeper threads to increase amount of items
+	notifyAll();
+}
+```
+
+### Condition
+
+***Condition*** is associated with a *lock* and allows threads to wait for some condition to become true, due to some activity happening on other threads. 
+
+`await()` - unlock *lock* and wait until signaled, similar to wait() method.
+
+`signal()` - wakes up a single thread that waiting on condition. Waked up thread reacquires the lock. If there are 0 threads waiting, this method does nothing. Similar to notify().
+
+`signalAll()` - wakes up *all* waiting threads, similar to notifyAll() method.
+
+```java
+Lock lockObject = new ReentrantLock();
+// create condition on lock object
+Condition condition = lockObject.newCondition();
+
+public void sell(Integer countToSell) {
+	lockObject.lock();
+	try {
+		while (productsCount < countToSell) {
+			// if required number of items is less than number of items in store
+			// wait for storekeeper to bring in new items
+			condition.await();
+		}
+
+		productsCount -= countToSell;
+		System.out.println(countToSell + " items were sold, " + productsCount + " items in store");
+		// signal to storekeeper threads to increase amount of items
+		condition.signalAll();
+	} finally {
+		lockObject.unlock();
+	}
+}
+```
+
 ### Semaphore
 
 ***Semaphore*** is used to restrict the number of access to a particular resources. When *Lock* allows only *one* access to a resource, semaphore can restrict any number of resource.
@@ -561,65 +620,54 @@ public static class ParkingService {
 }
 ```
 
-<h3 id="monitor-methods"> Wait(), notify(), notifyAll() </h3>
+<h3 id="count-down-latch"> CountDownLatch </h3>
 
-These methods of Object class are used to notify some threads of the actions of others. They are called only in **synchronized** context.
+***CountDownLatch*** is a synchronization tool that allows one or more threads to wait until a set of operations being performed in other threads completes. A CountDownLatch is initialized with a given _count_. Method `countDown()` is used to decrement the count of the latch, method `await()` is used to cause the current thread to wait until the latch has counted down to zero or the specified waiting time elapses. You **can not reuse** CountDownLatch once the count is reaches zero.
 
-`wait()` - causes the current thread to wait until another thread wakes it up. Current thread goes to *wait* state and not consuming CPU.
-
-`notify()` - wakes up a *single* waiting thread.
-
-`notifyAll()` - wakes up *all* waiting threads.
+For example, server-side core Java application that uses services architecture, where multiple services are provided by multiple threads and the application can not start processing until all services have started successfully.
 
 ```java
-public synchronized void sell(Integer countToSell) {
-	while (productsCount < countToSell) {
-		// if required number of items is less than number of items in store
-		// wait for storekeeper to bring in new items
-		wait();
+public static void main(String[] args) throws InterruptedException {
+	CountDownLatch countDownLatch = new CountDownLatch(4);
+	ExecutorService executorService = Executors.newCachedThreadPool();
+	executorService.submit(new InitializeService(countDownLatch, "AuthorizationService"));
+	executorService.submit(new InitializeService(countDownLatch, "ValidationService"));
+	executorService.submit(new InitializeService(countDownLatch, "CustomerService"));
+	executorService.submit(new InitializeService(countDownLatch, "OrderService"));
+
+	if (countDownLatch.await(10, TimeUnit.SECONDS)) {
+		// wait until all services will be initialized
+		System.out.println("Application is started");
+	} else {
+		System.out.println("Not all services were initialized");
 	}
 
-	productsCount -= countToSell;
-	System.out.println(countToSell + " items were sold, " + productsCount + " items in store");
-	// signal to storekeeper threads to increase amount of items
-	notifyAll();
+	executorService.shutdown();
 }
-```
 
-### Condition
+private class InitializeService implements Runnable {
 
-***Condition*** is associated with a *lock* and allows threads to wait for some condition to become true, due to some activity happening on other threads. 
+	private final CountDownLatch countDownLatch;
+	private final String serviceName;
 
-`await()` - unlock *lock* and wait until signaled, similar to wait() method.
+	public InitializeService(CountDownLatch countDownLatch, String name) {
+		this.serviceName = name;
+		this.countDownLatch = countDownLatch;
+	}
 
-`signal()` - wakes up a single thread that waiting on condition. Waked up thread reacquires the lock. If there are 0 threads waiting, this method does nothing. Similar to notify().
-
-`signalAll()` - wakes up *all* waiting threads, similar to notifyAll() method.
-
-```java
-Lock lockObject = new ReentrantLock();
-// create condition on lock object
-Condition condition = lockObject.newCondition();
-
-public void sell(Integer countToSell) {
-	lockObject.lock();
-	try {
-		while (productsCount < countToSell) {
-			// if required number of items is less than number of items in store
-			// wait for storekeeper to bring in new items
-			condition.await();
+	@Override
+	public void run() {
+		System.out.println("Start of initializing " + serviceName);
+		try {
+			Thread.sleep(new Random().nextInt(1000));
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
-
-		productsCount -= countToSell;
-		System.out.println(countToSell + " items were sold, " + productsCount + " items in store");
-		// signal to storekeeper threads to increase amount of items
-		condition.signalAll();
-	} finally {
-		lockObject.unlock();
+		System.out.println(serviceName + " is initialized");
+		countDownLatch.countDown();
 	}
 }
 ```
-
 
 <h2 id="virtual-threads"> Virtual Threads </h2>
 
