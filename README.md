@@ -23,6 +23,7 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [Semaphore](#semaphore)
    - [CountDownLatch](#count-down-latch)
    - [CyclicBarrier](#cyclic-barrier)
+   - [Exchanger](#exchanger)
 7. [Virtual Threads](#virtual-threads)
 
 ## Threads
@@ -701,6 +702,89 @@ private static class AddPlayer implements Runnable {
 		Thread.sleep(new Random().nextInt(100));
 		System.out.println("Player " + username + " joined the lobby");
 		cyclicBarrier.await();
+	}
+}
+```
+
+### Exchanger
+
+***Exchanger*** is a synchronization tool to share objects between pairs of threads. It has only on method - `exchange()` that is used to wait for another thread to arrive at exchange point and transfer the given object to it, receiving its object in return. Exchangers may be useful in applications such as genetic algorithms and pipeline designs.
+
+```java
+// it can be used for a simple pipes
+public static void main(String[] args) throws InterruptedException {
+	Exchanger<Queue<Integer>> readerExchanger = new Exchanger<>();
+	Exchanger<Queue<Integer>> writerExchanger = new Exchanger<>();
+	ExecutorService executorService = Executors.newCachedThreadPool();
+
+	executorService.submit(new GenerateTask(readerExchanger, 4));
+	executorService.submit(new SquareNumberTask(readerExchanger, writerExchanger));
+	executorService.submit(new DisplayNumber(writerExchanger));
+}
+
+private static class GenerateTask implements Runnable {
+	private final Exchanger<Queue<Integer>> readerExchanger;
+	private final Integer limit;
+	private final Random random = new Random();
+	private Queue<Integer> generatedNumbers = new ConcurrentLinkedQueue<>();
+
+	private GenerateTask(Exchanger<Queue<Integer>> readerExchanger, Integer limit) {
+		this.readerExchanger = readerExchanger;
+		this.limit = limit;
+	}
+
+	@Override
+	public void run() {
+		while (true) {
+			generatedNumbers.add(random.nextInt(100));
+			if (generatedNumbers.size() >= limit) {
+				generatedNumbers = readerExchanger.exchange(generatedNumbers);
+			}
+		}
+	}
+}
+
+private static class SquareNumberTask implements Runnable {
+	private final Exchanger<Queue<Integer>> readerExchanger;
+	private final Exchanger<Queue<Integer>> writerExchanger;
+	private Queue<Integer> generatedNumbers = new ConcurrentLinkedQueue<>();
+	private Queue<Integer> processedNumbers = new ConcurrentLinkedQueue<>();
+
+	private SquareNumberTask(Exchanger<Queue<Integer>> readerExchanger, Exchanger<Queue<Integer>> writerExchanger) {
+		this.readerExchanger = readerExchanger;
+		this.writerExchanger = writerExchanger;
+	}
+
+	@Override
+	public void run() {
+		generatedNumbers = readerExchanger.exchange(generatedNumbers);
+		while (true) {
+			processedNumbers.add((int) Math.pow(Optional.ofNullable(generatedNumbers.poll()).orElse(0), 2));
+			if (generatedNumbers.isEmpty()) {
+				processedNumbers = writerExchanger.exchange(processedNumbers);
+				generatedNumbers = readerExchanger.exchange(generatedNumbers);
+			}
+		}
+	}
+}
+
+private static class DisplayNumber implements Runnable {
+	private final Exchanger<Queue<Integer>> writerExchanger;
+	private Queue<Integer> processedNumbers = new ConcurrentLinkedQueue<>();
+
+	private DisplayNumber(Exchanger<Queue<Integer>> writerExchanger) {
+		this.writerExchanger = writerExchanger;
+	}
+
+	@Override
+	public void run() {
+		processedNumbers = writerExchanger.exchange(processedNumbers);
+		while (true) {
+			System.out.println("Processed number: " + processedNumbers.poll());
+			if (processedNumbers.isEmpty()) {
+				processedNumbers = writerExchanger.exchange(processedNumbers);
+			}
+		}
 	}
 }
 ```
