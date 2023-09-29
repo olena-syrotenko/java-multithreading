@@ -2,7 +2,7 @@
 
 _Multithreading_ is the ability of a CPU to execute multiple threads independently at the same time but share the process resources simultaneously.
 
-It has 2 main motivations: _responsiveness_ that is achived by concurrency and _highest perfomance_ that is achived by parallelism. 
+It has 2 main motivations: _responsiveness_ that is achieved by concurrency and _highest performance_ that is achieved by parallelism. 
 
 Multithreading in Java is a feature that allows you to subdivide the specific program into two or more threads to make the execution of the program fast and easy.
 
@@ -32,7 +32,7 @@ _Threads_ are the lightweight and smallest unit of processing that can be manage
 
 **Process** is a program in execution that is isolated and handled by PCB. While **thread** is a smallest unit of the particular process that share a common memory. So process can have single or multiple threads. According to that there are 2 types of architecture: **_Multithreaded_** and **_Multi-Process_**.
 
-**_Multithreaded_** architecture is suitable when tasks share a lot of data and perfomance is more important because a thread requires less time for creation, termination, and context switching than a process and uses fewer resources than a process. **_Multi-Process_** architecture is suitable when security and stability have the highest priority and tasks are unrelated.
+**_Multithreaded_** architecture is suitable when tasks share a lot of data and performance is more important because a thread requires less time for creation, termination, and context switching than a process and uses fewer resources than a process. **_Multi-Process_** architecture is suitable when security and stability have the highest priority and tasks are unrelated.
 
 ### Creation
 
@@ -66,7 +66,7 @@ The second way to create a thread is **extend _Thread_** class and create an obj
 
 `setName()` - is used to set name for the current thread.
 
-`setPriopriy()` - is used to set priority for the current thread. Can take values from 1 to 10. Thread with the highest priority will get an execution chance prior to other threads.
+`setPriority()` - is used to set priority for the current thread. Can take values from 1 to 10. Thread with the highest priority will get an execution chance prior to other threads.
 
 `setUncaughtExceptionHandler()` - is used to set the handler invoked when the current thread terminates due to an uncaught exception. Is useful if you need to close some resources.
 ```java
@@ -121,7 +121,7 @@ public static class InfiniteTask implements Runnable {
 // InfiniteTask was interrupted. Interruption flag was checked
 ```
 
-`join()` - is used to pause the execution of other threads unless and until the specified thread on which join is called is dead or completed. It can be useful if we need to stop a thread from running until another thread gets ended. Also time of pause can be passed as a prarameter.
+`join()` - is used to pause the execution of other threads unless and until the specified thread on which join is called is dead or completed. It can be useful if we need to stop a thread from running until another thread gets ended. Also time of pause can be passed as a parameter.
 
 ```java
 thread1.start();
@@ -146,7 +146,7 @@ System.out.println("All threads are completed");
 _Daemon threads_ are background threads that do not prevent the application from exiting after main thread termination. JVM waits for all user threads to finish their tasks before termination but excluding daemon ones. These threads are referred to as low priority threads. Daemon threads are good to use when:
 1. Need to do background tasks that shouldn't block application from termination;
 2. Code in a worker thread is not under out control and we do not want it to block application from termination.
-Daemon threads are usually used to carry out some supportive or service tasks for other threads, so you should not do any I/O operation in them because resources will not be closed correctrly. Method `setDaemon(true)` is used to make user thread a daemon one.
+Daemon threads are usually used to carry out some supportive or service tasks for other threads, so you should not do any I/O operation in them because resources will not be closed correctly. Method `setDaemon(true)` is used to make user thread a daemon one.
 ```java
 public static void main(String[] args) {
 	Runnable displayTask = () -> {
@@ -171,12 +171,12 @@ public static void main(String[] args) {
 ```
 ### Optimization
 
-**_Latency_** - the time of compilation of a single task. To improve perfomance according to latency criteria, we need to reduce time by breaking tasks into multiple ones. To achive the most effective optimization we need to check next steps:
+**_Latency_** - the time of compilation of a single task. To improve performance according to latency criteria, we need to reduce time by breaking tasks into multiple ones. To achieve the most effective optimization we need to check next steps:
 1. The optimal number of threads is the number of cores if all threads are runnable independently and without interruption and nothing else is running on CPU. If there is some background tasks, the optimal number of thread is difference between total core number and cores for background tasks. (_e.g._ if we have 8 cores and some background tasks, the optimal number of threads is equal to 6)
 2. It is necessary to compare the cost of execution of a task in single-threaded and multi-threaded cases for as many values as possible from the interval of execution of the task. (_e.g._ if the task is simple and takes little time, the time spent creating threads can increase the total execution time in a multi-threaded solution)
 3. It is necessary to assess the ability to divide the task into subtasks.
 
-**_Throughput_** - the amount of tasks completed in a gain period. To improve perfomance according to throughput criteria and perfom as many tasks as possible as fast as possible, we need to running independent tasks in parallel. It allows to skip pre- and postprocess steps and not to waste time for context switching. To achive the most effective optimization we can use a _thread pool_:
+**_Throughput_** - the amount of tasks completed in a gain period. To improve performance according to throughput criteria and perform as many tasks as possible as fast as possible, we need to running independent tasks in parallel. It allows to skip pre- and postprocess steps and not to waste time for context switching. To achieve the most effective optimization we can use a _thread pool_:
 1. Best strategy - handling each request on a different thread.
 2. If we need to execute CPU intensive tasks, the number of threads should be equal the number of cores.
 3. If we need to execute IO intensive tasks (e.g DB or API calling), the number of threads should be more than the number of cores.
@@ -194,11 +194,11 @@ class ThreadPerTaskExecutor implements Executor {
 
 **`ExecutorService`** is an interface that extends `Executor` with multiple methods for handling and checking the lifecycle of a concurrent task execution service.
 
-`submit()` - is used to submit `Callable` or a `Runnable` task for execution and returns a resonse as `Future` instance.
+`submit()` - is used to submit `Callable` or a `Runnable` task for execution and returns a response as `Future` instance.
 
 `invokeAll()` - is used to execute all tasks from provided collection and return the list of `Future` results.
 
-`invokeAny()` - is used to execute all tasks from provided collection and return the one of successfull results.
+`invokeAny()` - is used to execute all tasks from provided collection and return the one of successfully results.
 
 `shutdown()` - is used to shut down the executor service by stopping the acceptance of new tasks and shut down after all running threads finish their current work.
 
@@ -439,7 +439,7 @@ public static class ProductInventory {
 
 ***ReentrantLock*** - an object that provides same functionality as `synchronized` keyword. Requires explicit locking with `lock()` and unlocking with `unlock()`. 
 
-*Advantages*: provide more control over locking (wuth `lockInterruptibly()` and `tryLock()`) and guarantee fairness (with pass `true` into constructor `new ReentrantLock(true)`).
+*Advantages*: provide more control over locking (with `lockInterruptibly()` and `tryLock()`) and guarantee fairness (with pass `true` into constructor `new ReentrantLock(true)`).
 
 Good practice to avoid deadlocks - *surround* critical section with *try-catch* block and put `unlock()` method call in *finally* block.
 
@@ -456,12 +456,12 @@ public void someMethod() {
 }
 ```
 
-**`lockInterruptibly()`** - allow iterrupt suspended thread from waiting on the lock. 
+**`lockInterruptibly()`** - allow interrupt suspended thread from waiting on the lock. 
 
 ```java
 private final ReentrantLock lockObject = new ReentrantLock();
 
-// if we iterrupt thread that waiting for lockObject in this method then threas will be successfully interrupted and be free to execute another task 
+// if we interrupt thread that waiting for lockObject in this method then thread will be successfully interrupted and be free to execute another task 
 public void someMethod() {
 	try {
     		lockObject.lockInterruptibly();
@@ -481,7 +481,7 @@ public void someMethod() {
 ```java
 private final ReentrantLock lockObject = new ReentrantLock();
 
-// if lockObject will be locked, then we just skeep critical section and go to another instructions
+// if lockObject will be locked, then we just skip critical section and go to another instructions
 public void someMethod() {
 	if (lockObject.tryLock()) {
 		try {
