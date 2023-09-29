@@ -24,6 +24,7 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [CountDownLatch](#count-down-latch)
    - [CyclicBarrier](#cyclic-barrier)
    - [Exchanger](#exchanger)
+   - [Phaser](#phaser)
 7. [Virtual Threads](#virtual-threads)
 
 ## Threads
@@ -789,6 +790,102 @@ private static class DisplayNumber implements Runnable {
 }
 ```
 
+### Phaser
+
+***Phaser*** is tool to build logic in which threads need to wait on the barrier before going to the next step of execution. It is similar in functionality to CyclicBarrier and CountDownLatch but supporting more flexible usage. Each phase can have a _different_ number of threads waiting to advance to another phase.
+
+`register()` - is used to add a new unarrived party to phaser. 
+
+`arrive()` - is used to signal that thread arrived at the barrier without waiting for others to arrive.
+
+`arriveAndAwaitAdvance()` - is used to signal that thread arrived at the barrier and await others.
+
+`arriveAndDeregister()` - is used to signal that thread arrived at the barrier and deregister from it without waiting for others to arrive.
+
+`getPhase()` - is used to get number of the current phase.
+
+```java
+public static void main(String[] args) {
+	ExecutorService executorService = Executors.newCachedThreadPool();
+
+// we can use Phaser to execute task which parts should be completed in different phases
+	Phaser phaser = new Phaser();
+// on the 1st phase we read data
+	executorService.submit(new ReadTask(phaser, "request1.json"));
+// on the 2nd phase we create different entities
+	executorService.submit(new CreateTask(phaser, "Order", 1));
+	executorService.submit(new CreateTask(phaser, "OrderDetails", 1));
+// on the 3rd phase we send emails
+	executorService.submit(new SendEmailTask(phaser, "customer@mail.com", 2));
+	executorService.submit(new SendEmailTask(phaser, "owner@mail.com", 2));
+	executorService.shutdown();
+}
+
+private static class ReadTask implements Runnable {
+	private final Phaser phaser;
+	private final String file;
+
+	private ReadTask(Phaser phaser, String file) {
+		this.phaser = phaser;
+		this.file = file;
+		phaser.register();
+	}
+
+	@Override
+	public void run() {
+		Thread.sleep(100);
+		System.out.println("Read request from file " + file);
+		phaser.arriveAndDeregister();
+	}
+}
+
+private static class CreateTask implements Runnable {
+	private final Phaser phaser;
+	private final String entity;
+	private final Integer phase;
+
+	private CreateTask(Phaser phaser, String entity, Integer phase) {
+		this.phaser = phaser;
+		this.entity = entity;
+		this.phase = phase;
+		phaser.register();
+	}
+
+	@Override
+	public void run() {
+		while (phaser.getPhase() < phase) {
+			phaser.arriveAndAwaitAdvance();
+		}
+		Thread.sleep(new Random().nextInt(200));
+		System.out.println("Created " + entity);
+		phaser.arriveAndDeregister();
+	}
+}
+
+private static class SendEmailTask implements Runnable {
+	private final Phaser phaser;
+	private final String receiver;
+	private final Integer phase;
+
+	private SendEmailTask(Phaser phaser, String receiver, Integer phase) {
+		this.phaser = phaser;
+		this.receiver = receiver;
+		this.phase = phase;
+		phaser.register();
+	}
+
+	@Override
+	public void run() {
+		while (phaser.getPhase() < phase) {
+			phaser.arriveAndAwaitAdvance();
+		}
+		Thread.sleep(new Random().nextInt(50));
+		System.out.println("Send email to " + receiver);
+		phaser.arriveAndDeregister();
+	}
+}
+
+```
 
 <h2 id="virtual-threads"> Virtual Threads </h2>
 
