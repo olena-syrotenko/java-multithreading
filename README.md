@@ -9,7 +9,7 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
 ## Plan
 1. [Threads](#threads)
    - [creation](#creation)
-   - [basic methods](#methods)
+   - [basic methods](#basic-methods)
    - [daemon thread](#daemon)
    - [optimization](#optimization)   
 2. [Executor](#executor)
@@ -18,11 +18,11 @@ Multithreading in Java is a feature that allows you to subdivide the specific pr
    - [Deadlock](#deadlock)
    - [ReentrantLock](#lock)
 6. [Inter-thread communication](#inter-thread-communication)
-   - [Wait(), notify(), notifyAll()](#monitor-methods)
+   - [Wait(), notify(), notifyAll()](#wait-notify-notifyall)
    - [Condition](#condition)
    - [Semaphore](#semaphore)
-   - [CountDownLatch](#count-down-latch)
-   - [CyclicBarrier](#cyclic-barrier)
+   - [CountDownLatch](#countdownlatch)
+   - [CyclicBarrier](#cyclicbarrier)
    - [Exchanger](#exchanger)
    - [Phaser](#phaser)
 7. [Virtual Threads](#virtual-threads)
@@ -56,7 +56,7 @@ The second way to create a thread is **extend _Thread_** class and create an obj
         }
     }
 ```
-<h3 id="methods"> Basic Methods </h3>
+### Basic Methods
 
 `start()` - is used to create a thread and start the execution of the task that is kept in the run() method. Can be called only once.
 
@@ -494,9 +494,9 @@ public void someMethod() {
 }
 ```
 
-<h2 id="inter-thread-communication"> Inter-thread communication </h2>
+## Inter-thread communication
 
-<h3 id="monitor-methods"> Wait(), notify(), notifyAll() </h3>
+### Wait(), notify(), notifyAll()
 
 These methods of Object class are used to notify some threads of the actions of others. They are called only in **synchronized** context.
 
@@ -622,7 +622,7 @@ public static class ParkingService {
 }
 ```
 
-<h3 id="count-down-latch"> CountDownLatch </h3>
+### CountDownLatch
 
 ***CountDownLatch*** is a synchronization tool that allows one or more threads to wait until a set of operations being performed in other threads completes. A CountDownLatch is initialized with a given _count_. Method `countDown()` is used to decrement the count of the latch, method `await()` is used to cause the current thread to wait until the latch has counted down to zero or the specified waiting time elapses. You **can not reuse** CountDownLatch once the count is reaches zero.
 
@@ -671,7 +671,7 @@ private class InitializeService implements Runnable {
 }
 ```
 
-<h3 id="cyclic-barrier"> CyclicBarrier </h3>
+### CyclicBarrier
 
 ***CyclicBarrier*** is synchronization tool that allows a set of threads to all wait for each other to reach a common barrier point. A CyclicBarrier is initialized with a given _count_ and _Runnable task_ that will be executed after enough threads reach a barrier. Method `await()` is used to register that a certain thread has reached the barrier point. It **can be re-used** after the waiting threads are released.
 
@@ -887,7 +887,7 @@ private static class SendEmailTask implements Runnable {
 
 ```
 
-<h2 id="virtual-threads"> Virtual Threads </h2>
+## Virtual Threads
 
 ***Virtual thread*** is and instance of Java Thread object but it is fully managed by JVM and garbage collector and isn't tied to a specific OS thread. A virtual thread still runs code on an OS thread. However, when code running in a virtual thread calls a blocking I/O operation, the Java runtime suspends the virtual thread until it can be resumed. The OS thread associated with the suspended virtual thread is now free to perform operations for other virtual threads.
 
